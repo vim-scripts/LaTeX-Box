@@ -243,7 +243,6 @@ Document templates.
 Document wrap selection.
 Document find label by number.
 Document close last environment.
-Copyright and version.
 Errors: just document with :cc etc., no need to create bindings
 
 

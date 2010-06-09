@@ -1,8 +1,12 @@
 " LaTeX Box completion
 
 " <SID> Wrap {{{
+function! s:GetSID()
+	return matchstr(expand('<sfile>'), '\zs<SNR>\d\+_\ze.*$')
+endfunction
+let s:SID = s:GetSID()
 function! s:SIDWrap(func)
-	return matchstr(expand('<sfile>'), '\zs<SNR>\d\+_\ze.*$') . a:func
+	return s:SID . a:func
 endfunction
 " }}}
 

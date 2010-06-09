@@ -89,6 +89,7 @@ function! s:PromptForMainFile()
 	return l:file
 endfunction
 
+" Return the directory of the main tex file
 function! LatexBox_GetTexRoot()
 	return fnamemodify(LatexBox_GetMainTexFile(), ':h')
 endfunction
@@ -101,36 +102,44 @@ endfunction
 "!	return expand("%:p")
 "!endfunction
 
+function! LatexBox_GetTexBasename(with_dir)
+	if a:with_dir
+		return fnamemodify(LatexBox_GetMainTexFile(), ':r')
+	else
+		return fnamemodify(LatexBox_GetMainTexFile(), ':t:r')
+	endif
+endfunction
+
 function! LatexBox_GetAuxFile()
-	return fnamemodify(LatexBox_GetMainTexFile(), ':r') . '.aux'
+	return LatexBox_GetTexBasename(1) . '.aux'
 endfunction
 
 function! LatexBox_GetLogFile()
-	return fnamemodify(LatexBox_GetMainTexFile(), ':r') . '.log'
+	return LatexBox_GetTexBasename(1) . '.log'
 endfunction
 
 function! LatexBox_GetOutputFile()
-	return fnamemodify(LatexBox_GetMainTexFile(), ':r') . '.' . g:LatexBox_output_type
+	return LatexBox_GetTexBasename(1) . '.' . g:LatexBox_output_type
 endfunction
 " }}}
 
 " FIXME: remove this
-" GetAuxIncludedFiles {{{
-function! LatexBox_GetAuxIncludedFiles(auxfile)
-
-	let files = []
-	let prefix = fnamemodify(a:auxfile, ':p:h')
-
-	for line in readfile(a:auxfile)
-		let newaux = matchstr(line, '^\\@input{\zs[^}]*\ze}')
-		if newaux != ''
-			call add(files, prefix . '/' . newaux)
-		endif
-	endfor
-
-	return files
-
-endfunction
+"!" GetAuxIncludedFiles {{{
+"!function! LatexBox_GetAuxIncludedFiles(auxfile)
+"!
+"!	let files = []
+"!	let prefix = fnamemodify(a:auxfile, ':p:h')
+"!
+"!	for line in readfile(a:auxfile)
+"!		let newaux = matchstr(line, '^\\@input{\zs[^}]*\ze}')
+"!		if newaux != ''
+"!			call add(files, prefix . '/' . newaux)
+"!		endif
+"!	endfor
+"!
+"!	return files
+"!
+"!endfunction
 
 " }}}
 

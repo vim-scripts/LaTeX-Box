@@ -7,6 +7,8 @@ function! LatexBox_JumpToNextBraces(backward)
 	if a:backward
 		normal h
 		let flags .= 'b'
+	else
+		let flags .= 'c'
 	endif
 	if search('[][}{]', flags) > 0
 		normal l
