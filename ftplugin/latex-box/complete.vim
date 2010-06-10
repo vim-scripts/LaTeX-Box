@@ -195,7 +195,7 @@ function! s:CompleteLabels(regex, ...)
 
 	" search for the target equation number
 	for line in readfile(auxfile)
-		let matches = matchlist(line, '^\\newlabel{\(' . a:regex . '[^}]*\)}{{\([^}]*\)}{\([^}]*\)}}')
+		let matches = matchlist(line, '^\\newlabel{\(' . a:regex . '[^}]*\)}{{\([^}]*\)}{\([^}]*\)}.*}')
 		if !empty(matches)
 
 			let entry = {'word': matches[1], 'menu': '(' . matches[2] . ') [p.' . matches[3] . ']'}

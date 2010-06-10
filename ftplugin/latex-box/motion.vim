@@ -13,7 +13,9 @@ function! LatexBox_JumpToNextBraces(backward)
 	if search('[][}{]', flags) > 0
 		normal l
 	endif
-	if strpart(getline('.'), col('.') - 1, 1) =~ '[]}]'
+	let prev = strpart(getline('.'), col('.') - 2, 1)
+	let next = strpart(getline('.'), col('.') - 1, 1)
+	if next =~ '[]}]' && prev !~ '[[{]'
 		return "\<Right>"
 	else
 		return ''
@@ -84,7 +86,7 @@ function! LatexBox_TOC()
 	map <buffer> <silent> <Esc>		:bdelete<CR>
 	map <buffer> <silent> <Space> 	:call <SID>TOCActivate(0)<CR>
 	map <buffer> <silent> <CR> 		:call <SID>TOCActivate(1)<CR>
-	setlocal cursorline nomodifiable tabstop=8
+	setlocal cursorline nomodifiable tabstop=8 nowrap
 
 	let b:toc = toc
 	let b:calling_win = bufwinnr(calling_buf)
