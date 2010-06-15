@@ -28,9 +28,9 @@ function! LatexBox_Complete(findstart, base)
 			let s:completion_type = 'begin'
 		elseif line[0:pos-1] =~ '\\end\_\s*{$'
 			let s:completion_type = 'end'
-		elseif line[0:pos-1] =~ '\\\(eq\)\?ref\_\s*{$'
+		elseif line[0:pos-1] =~ g:LatexBox_ref_pattern . '$'
 			let s:completion_type = 'ref'
-		elseif line[0:pos-1] =~ '\\cite\(p\|t\)\?\_\s*{$'
+		elseif line[0:pos-1] =~ g:LatexBox_cite_pattern . '$'
 			let s:completion_type = 'bib'
 		else
 			let s:completion_type = 'command'
@@ -78,10 +78,13 @@ function! LatexBox_Complete(findstart, base)
 				endif
 			endfor
 		elseif s:completion_type == 'ref'
-			return s:CompleteLabels(a:base)
+			let suggestions = s:CompleteLabels(a:base)
 		elseif s:completion_type == 'bib'
 			" suggest BibTeX entries
-			return LatexBox_BibComplete(a:base)
+			let suggestions = LatexBox_BibComplete(a:base)
+		endif
+		if !has('gui_running')
+			redraw!
 		endif
 		return suggestions
 	endif
@@ -306,7 +309,7 @@ function! LatexBox_Template(env, close)
 endfunction
 
 function! LatexBox_TemplatePrompt(close)
-	let env = input('Environment: ', '', 'customlist,' . s:SIDWrap('GetEnvList'))
+	let env = input('Environment: ', '', 'customlist,' . s:SIDWrap('GetTemplateList'))
 	return LatexBox_Template(env, a:close)
 endfunction
 

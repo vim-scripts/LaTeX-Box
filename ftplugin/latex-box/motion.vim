@@ -122,8 +122,17 @@ function! s:TOCActivate(close)
 	else
 		execute 'edit ' . entry['file']
 	endif
-	call search('\\' . entry['level'] . '\_\s*{' .
-				\ substitute(entry['text'], ' ', '\\_\\s\\+', 'g') . '}', 'w')
+
+	let titlestr = entry['text']
+
+	" Credit goes to Marcin Szamotulski for the following fix. It allows to match through
+	" commands added by TeX.
+	let titlestr = substitute(titlestr, '\\\w*\>\s*\%({[^}]*}\)\?', '.*', 'g')
+
+	let titlestr = escape(titlestr, '\')
+	let titlestr = substitute(titlestr, ' ', '\\_\\s\\+', 'g')
+
+	call search('\\' . entry['level'] . '\_\s*{' . titlestr . '}', 'w')
 	normal zt
 
 	if a:close

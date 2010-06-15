@@ -12,19 +12,27 @@ endfunction
 " }}}
 
 
-" list of log files for which latexmk is running
-let s:latexmk_running_list = []
+" dictionary of latexmk PID's (basename: pid)
+let s:latexmk_running_pids = {}
+let s:log_files = {}
+
+" Set PID {{{
+function! s:LatexmkSetPID(basename, pid)
+	let s:latexmk_running_pids[a:basename] = a:pid
+endfunction
+" }}}
 
 " Callback {{{
-function! s:LatexmkCallback(status, log)
+function! s:LatexmkCallback(basename, status)
 	"let pos = getpos('.')
-	execute 'cgetfile ' . a:log
+	execute 'cgetfile ' . s:log_files[a:basename]
 	if a:status
 		echomsg "latexmk exited with status " . a:status
 	else
 		echomsg "latexmk finished"
 	endif
-	call remove(s:latexmk_running_list, index(s:latexmk_running_list, a:log))
+	call remove(s:latexmk_running_pids, a:basename)
+	call remove(s:log_files, a:basename)
 	"call setpos('.', pos)
 endfunction
 " }}}
@@ -32,14 +40,21 @@ endfunction
 " Latexmk {{{
 function! LatexBox_Latexmk(force)
 
-	let log = LatexBox_GetLogFile()
-
-	if index(s:latexmk_running_list, log) >= 0
-		echomsg "latexmk is already running (" . fnamemodify(log, ':.') . ")"
+	if empty(v:servername)
+		echoerr "cannot run latexmk in background without a VIM server"
 		return
 	endif
 
-	let l:callback = s:SIDWrap('LatexmkCallback')
+	let basename = LatexBox_GetTexBasename(0)
+	let s:log_files[basename] = LatexBox_GetLogFile()
+
+	if has_key(s:latexmk_running_pids, basename)
+		echomsg "latexmk is already running for `" . basename . "'"
+		return
+	endif
+
+	let callsetpid = s:SIDWrap('LatexmkSetPID')
+	let callback = s:SIDWrap('LatexmkCallback')
 
 	let l:options = '-' . g:LatexBox_output_type . ' -quiet ' . g:LatexBox_latexmk_options
 	if a:force
@@ -48,12 +63,59 @@ function! LatexBox_Latexmk(force)
 	let l:options .= " -e '$pdflatex =~ s/ / -file-line-error /'"
 	let l:options .= " -e '$latex =~ s/ / -file-line-error /'"
 
-	let l:cmd = 'cd ' . LatexBox_GetTexRoot() . ' ; latexmk ' . l:options . ' ' . LatexBox_GetMainTexFile()
-	let l:vimcmd = v:progname . ' --servername ' . v:servername . ' --remote-expr ' . 
-				\ shellescape(l:callback) . '\($?,\"' . log . '\"\)'
+	" callback to set the pid
+	let vimsetpid = g:vim_program . ' --servername ' . v:servername . ' --remote-expr ' .
+				\ shellescape(callsetpid) . '\(\"' . basename . '\",$$\)'
 
-	call add(s:latexmk_running_list, log)
-	silent execute '! ( ( ' . l:cmd . ' ) ; ' . l:vimcmd . ' ) &'
+	" latexmk command
+	let cmd = 'cd ' . LatexBox_GetTexRoot() . ' ; latexmk ' . l:options . ' ' . LatexBox_GetMainTexFile()
+
+	" callback after latexmk is finished
+	let vimcmd = g:vim_program . ' --servername ' . v:servername . ' --remote-expr ' . 
+				\ shellescape(callback) . '\(\"' . basename . '\",$?\)'
+
+	silent execute '! ( ' . vimsetpid . ' ; ( ' . cmd . ' ) ; ' . vimcmd . ' ) &'
+endfunction
+" }}}
+
+" LatexmkStop {{{
+function! LatexBox_LatexmkStop()
+
+	let basename = LatexBox_GetTexBasename(0)
+
+	if !has_key(s:latexmk_running_pids, basename)
+		echomsg "latexmk is not running for `" . basename . "'"
+		return
+	endif
+
+	let gpid = s:latexmk_running_pids[basename]
+
+	" This version doesn't work on systems on which pkill is not installed:
+	"!silent execute '! pkill -g ' . pid
+
+	" This version is more portable, but still doesn't work on Mac OS X:
+	"!silent execute '! kill `ps -o pid= -g ' . pid . '`'
+
+	" Since 'ps' behaves differently on different platforms, we must use brute force:
+	" - list all processes in a temporary file
+	" - match by process group ID
+	" - kill matches
+	let pids = []
+	let tmpfile = tempname()
+	silent execute '!ps x -o pgid,pid > ' . tmpfile
+	for line in readfile(tmpfile)
+		let pid = matchstr(line, '^\s*' . gpid . '\s\+\zs\d\+\ze')
+		if !empty(pid)
+			call add(pids, pid)
+		endif
+	endfor
+	call delete(tmpfile)
+	if !empty(pids)
+		silent execute '! kill ' . join(pids)
+	endif
+
+	call remove(s:latexmk_running_pids, basename)
+	echomsg "latexmk stopped for `" . basename . "'"
 endfunction
 " }}}
 
@@ -68,30 +130,47 @@ function! LatexBox_LatexmkClean(cleanall)
 
 	let l:cmd = 'cd ' . LatexBox_GetTexRoot() . ' ; latexmk ' . l:options . ' ' . LatexBox_GetMainTexFile()
 
-	silent execute '! ( ' . l:cmd . ' )'
+	silent execute '! ' . l:cmd
 	echomsg "latexmk clean finished"
 endfunction
 " }}}
 
 " LatexmkStatus {{{
-function! LatexBox_LatexmkStatus()
+function! LatexBox_LatexmkStatus(detailed)
 
-	let log = LatexBox_GetLogFile()
-
-	if index(s:latexmk_running_list, log) >= 0
-		echo "latexmk is running (" . fnamemodify(log, ':.') . ")"
+	if a:detailed
+		if empty(s:latexmk_running_pids)
+			echo "latexmk is not running"
+		else
+			let plist = ""
+			for [key, val] in items(s:latexmk_running_pids)
+				if !empty(plist)
+					plist .= '; '
+				endif
+				let plist .= key . ':' . val
+			endfor
+			echo "latexmk is running (" . plist . ")"
+		endif
 	else
-		echo "latexmk is not running"
+		let basename = LatexBox_GetTexBasename(0)
+		if has_key(s:latexmk_running_pids, basename)
+			echo "latexmk is running"
+		else
+			echo "latexmk is not running"
+		endif
 	endif
+
 endfunction
 " }}}
 
 " Commands {{{
-command! Latexmk			call LatexBox_Latexmk(0)
-command! LatexmkForce		call LatexBox_Latexmk(1)
-command! LatexmkClean		call LatexBox_LatexmkClean(0)
-command! LatexmkCleanAll	call LatexBox_LatexmkClean(1)
-command! LatexmkStatus		call LatexBox_LatexmkStatus()
+command! Latexmk				call LatexBox_Latexmk(0)
+command! LatexmkForce			call LatexBox_Latexmk(1)
+command! LatexmkClean			call LatexBox_LatexmkClean(0)
+command! LatexmkCleanAll		call LatexBox_LatexmkClean(1)
+command! LatexmkStatus			call LatexBox_LatexmkStatus(0)
+command! LatexmkStatusDetailed	call LatexBox_LatexmkStatus(1)
+command! LatexmkStop			call LatexBox_LatexmkStop()
 " }}}
 
 " vim:fdm=marker:ff=unix:noet:ts=4:sw=4

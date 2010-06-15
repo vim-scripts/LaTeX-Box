@@ -16,6 +16,7 @@ This plugin provides:
 
 |latex-box-commands|			COMMANDS
 |latex-box-commands-compilation|	Compilation
+|latex-box-commands-viewing|		Viewing
 |latex-box-commands-motion|		Motion
 
 |latex-box-motion|			MOTION
@@ -23,6 +24,7 @@ This plugin provides:
 |latex-box-mappings|			MAPPINGS
 |latex-box-mappings-compilation|	Compilation
 |latex-box-mappings-templates|		Templates
+|latex-box-mappings-viewing|		Viewing
 |latex-box-mappings-motion|		Motion
 
 |latex-box-settings|			SETTINGS
@@ -72,8 +74,11 @@ Labels ~
 Label completion is triggered by '\ref{' or '\eqref{'.  For example, >
 	\ref{sec:<CTRL-X><CTRL-O>
 offers a list of all matching labels, with their associated value and page number.
+Labels are read from the aux file, so label completion works only after
+complilation.
 
 Associated settings:
+	|g:LatexBox_ref_pattern|
 	|g:LatexBox_completion_close_braces|
 
 
@@ -94,7 +99,10 @@ Then, try: >
 	\cite{Knuth 1981<CTRL-X><CTRL-O>
 	\cite{algo<CTRL-X><CTRL-O>
 
+You can also use regular expressions (or vim patterns) after '\cite{'.
+
 Associated settings:
+	|g:LatexBox_cite_pattern|
 	|g:LatexBox_bibtex_wild_spaces|
 	|g:LatexBox_completion_close_braces|
 
@@ -120,13 +128,26 @@ Compilation ~
 	Clean temporary output from LaTeX.
 *:LatexmkCleanAll*
 	Clean all output from LaTeX.
+*:LatexmkStop*
+	Stop latexmk if it is running.
+*:LatexmkStatus*
+	Show the running status of latexmk for the current buffer.
+*:LatexmkStatusDetailed*
+	Show the running status of latexmk for all buffers with process group
+	ID's.
 
+When latexmk terminates, it reports its success or failure (with status
+number). To navigate through the errors, you can use the |:cc|, |:cn| and
+|:cp| commands, as well as the |:clist| command to list the errors.
+
+							*latex-box-commands-viewing*
 Viewing ~
 
 *:LatexView*
 	Launch viewer on output file.
 	See |g:LatexBox_output_type| and |g:LatexBox_viewer|.
 
+							*latex-box-commands-motion*
 Motion ~
 
 *:LatexTOC*
@@ -154,7 +175,15 @@ Compilation ~
 	Clean temporary output from LaTeX.
 <Leader>lC		|:LatexmkCleanAll|
 	Clean all output from LaTeX.
+<Leader>lk		|:LatexmkStop|
+	Stop latexmk if it is running.
+<Leader>lg		|:LatexmkStatus|
+	Show the running status of latexmk for the current buffer.
+<Leader>lG		|:LatexmkStatusDetailed|
+	Show the running status of latexmk for all buffers with process group
+	ID's.
 
+							*latex-box-mappings-viewing*
 Viewing ~
 
 <Leader>lv		|:LatexView|
@@ -211,6 +240,17 @@ Completion ~
 	|latex-box-completion-commands|.
 	See |complete-items|.
 
+*g:LatexBox_cite_pattern*		Default: '\\cite\(p\|t\)\?\*\?\_\s*{'
+*g:LatexBox_ref_pattern*		Default: '\\v\?\(eq\|page\)\?ref\*\?\_\s*{'
+
+	Patterns to match \cite and \ref commands for BibTeX and label completion.
+	Must include the trailing '{'.
+	To match all commands that contain 'cite' (case insensitive), use: >
+		let g:LatexBox_cite_pattern = '\c\\\a*cite\a*\*\?\_\s*{'
+<	To match all commands that end with 'ref' (case insensitive): >
+		let g:LatexBox_ref_pattern = '\c\\\a*ref\*\?\_\s*{'
+<	Both examples match commands with a trailing star too.
+
 
 						*latex-box-settings-templates*
 Templates ~
@@ -223,6 +263,13 @@ Templates ~
 
 						*latex-box-settings-compilation*
 Compilation ~
+
+*g:vim_program*			Default: autodetected
+
+	Vim program to use on command line for callbacks.
+	If autodetect fails, defaults to >
+	'/Applications/MacVim.app/Contents/MacOS/Vim -g'
+<	on MacVim, or to |v:progname| on other systems.
 
 *g:LatexBox_latexmk_options*	Default: ""
 

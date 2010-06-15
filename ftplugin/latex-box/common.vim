@@ -3,43 +3,94 @@
 " Settings {{{
 
 " Compilation {{{
-let g:LatexBox_latexmk_options = ''
-let g:LatexBox_output_type = 'pdf'
-let g:LatexBox_viewer = 'xdg-open'
+
+" g:vim_program {{{
+if !exists('g:vim_program')
+
+	" attempt autodetection of vim executable
+	let g:vim_program = ''
+	let tmpfile = tempname()
+	silent execute '!ps -o command= -p $PPID > ' . tmpfile
+	for line in readfile(tmpfile)
+		let line = matchstr(line, '^\S\+\>')
+		if !empty(line) && executable(line)
+			let g:vim_program = line . ' -g'
+			break
+		endif
+	endfor
+	call delete(tmpfile)
+
+	if empty(g:vim_program)
+		if has('gui_macvim')
+			let g:vim_program = '/Applications/MacVim.app/Contents/MacOS/Vim -g'
+		else
+			let g:vim_program = v:progname
+		endif
+	endif
+endif
+" }}}
+
+if !exists('g:LatexBox_latexmk_options')
+	let g:LatexBox_latexmk_options = ''
+endif
+if !exists('g:LatexBox_output_type')
+	let g:LatexBox_output_type = 'pdf'
+endif
+if !exists('g:LatexBox_viewer')
+	let g:LatexBox_viewer = 'xdg-open'
+endif
 " }}}
 
 " Completion {{{
-let g:LatexBox_completion_close_braces = 1
-let g:LatexBox_bibtex_wild_spaces = 1
+if !exists('g:LatexBox_completion_close_braces')
+	let g:LatexBox_completion_close_braces = 1
+endif
+if !exists('g:LatexBox_bibtex_wild_spaces')
+	let g:LatexBox_bibtex_wild_spaces = 1
+endif
 
-let g:LatexBox_completion_environments = [
-	\ {'word': 'itemize',		'menu': 'bullet list' },
-	\ {'word': 'enumerate',		'menu': 'numbered list' },
-	\ {'word': 'description',	'menu': 'description' },
-	\ {'word': 'center',		'menu': 'centered text' },
-	\ {'word': 'figure',		'menu': 'floating figure' },
-	\ {'word': 'table',			'menu': 'floating table' },
-	\ {'word': 'equation',		'menu': 'equation (numbered)' },
-	\ {'word': 'align',			'menu': 'aligned equations (numbered)' },
-	\ {'word': 'align*',		'menu': 'aligned equations' },
-	\ ]
+if !exists('g:LatexBox_cite_pattern')
+	let g:LatexBox_cite_pattern = '\\cite\(p\|t\)\?\*\?\_\s*{'
+endif
+if !exists('g:LatexBox_ref_pattern')
+	let g:LatexBox_ref_pattern = '\\v\?\(eq\|page\)\?ref\*\?\_\s*{'
+endif
 
-let g:LatexBox_completion_commands = [
-	\ {'word': '\begin{' },
-	\ {'word': '\end{' },
-	\ {'word': '\item' },
-	\ {'word': '\label{' },
-	\ {'word': '\ref{' },
-	\ {'word': '\eqref{' },
-	\ {'word': '\cite{' },
-	\ {'word': '\nonumber' },
-	\ {'word': '\bibliography' },
-	\ {'word': '\bibliographystyle' },
-	\ ]
+if !exists('g:LatexBox_completion_environments')
+	let g:LatexBox_completion_environments = [
+		\ {'word': 'itemize',		'menu': 'bullet list' },
+		\ {'word': 'enumerate',		'menu': 'numbered list' },
+		\ {'word': 'description',	'menu': 'description' },
+		\ {'word': 'center',		'menu': 'centered text' },
+		\ {'word': 'figure',		'menu': 'floating figure' },
+		\ {'word': 'table',			'menu': 'floating table' },
+		\ {'word': 'equation',		'menu': 'equation (numbered)' },
+		\ {'word': 'align',			'menu': 'aligned equations (numbered)' },
+		\ {'word': 'align*',		'menu': 'aligned equations' },
+		\ {'word': 'document' },
+		\ {'word': 'abstract' },
+		\ ]
+endif
+
+if !exists('g:LatexBox_completion_commands')
+	let g:LatexBox_completion_commands = [
+		\ {'word': '\begin{' },
+		\ {'word': '\end{' },
+		\ {'word': '\item' },
+		\ {'word': '\label{' },
+		\ {'word': '\ref{' },
+		\ {'word': '\eqref{eq:' },
+		\ {'word': '\cite{' },
+		\ {'word': '\nonumber' },
+		\ {'word': '\bibliography' },
+		\ {'word': '\bibliographystyle' },
+		\ ]
+endif
 " }}}
 
 " Templates {{{
-let g:LatexBox_templates = {
+if !exists('g:LatexBox_templates')
+	let g:LatexBox_templates = {
 				\ 'document':	{},
 				\ 'abstract':	{},
 				\ 'itemize':	{'template': "\<Tab>\\item "},
@@ -52,6 +103,7 @@ let g:LatexBox_templates = {
 				\ 'align':		{'label': 'eq:'},
 				\ 'gather':		{'label': 'eq:'},
 				\ }
+endif
 " }}}
 
 " }}}
