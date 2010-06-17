@@ -8,6 +8,7 @@ map <buffer> <LocalLeader>lC :LatexmkCleanAll<CR>
 map <buffer> <LocalLeader>lg :LatexmkStatus<CR>
 map <buffer> <LocalLeader>lG :LatexmkStatusDetailed<CR>
 map <buffer> <LocalLeader>lk :LatexmkStop<CR>
+map <buffer> <LocalLeader>le :LatexErrors<CR>
 " }}}
 
 " View {{{

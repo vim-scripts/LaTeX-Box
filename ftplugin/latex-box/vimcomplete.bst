@@ -92,8 +92,12 @@ FUNCTION {format.names}
   while$
   } if$
 }
+
 FUNCTION {format.authors}
-{ author format.names }
+{ author empty$
+    {editor format.names} {author format.names}
+  if$
+}
 
 FUNCTION {format.title}
 { title

@@ -89,21 +89,22 @@ endif
 " }}}
 
 " Templates {{{
-if !exists('g:LatexBox_templates')
-	let g:LatexBox_templates = {
-				\ 'document':	{},
-				\ 'abstract':	{},
-				\ 'itemize':	{'template': "\<Tab>\\item "},
-				\ 'enumerate':	{'template': "\<Tab>\\item "},
-				\ 'figure':	 	{'label': 'fig:', 'options': '[htb]'},
-				\ 'table':		{'label': 'tab:', 'options': '[htb]'},
-				\ 'tabular':	{'options': '[cc]'},
-				\ 'center':	 	{},
-				\ 'equation':	{'label': 'eq:'},
-				\ 'align':		{'label': 'eq:'},
-				\ 'gather':		{'label': 'eq:'},
-				\ }
-endif
+" DEPRECATED
+"!if !exists('g:LatexBox_templates')
+"!	let g:LatexBox_templates = {
+"!				\ 'document':	{},
+"!				\ 'abstract':	{},
+"!				\ 'itemize':	{'template': "\<Tab>\\item "},
+"!				\ 'enumerate':	{'template': "\<Tab>\\item "},
+"!				\ 'figure':	 	{'label': 'fig:', 'options': '[htb]'},
+"!				\ 'table':		{'label': 'tab:', 'options': '[htb]'},
+"!				\ 'tabular':	{'options': '[cc]'},
+"!				\ 'center':	 	{},
+"!				\ 'equation':	{'label': 'eq:'},
+"!				\ 'align':		{'label': 'eq:'},
+"!				\ 'gather':		{'label': 'eq:'},
+"!				\ }
+"!endif
 " }}}
 
 " }}}
@@ -146,14 +147,6 @@ function! LatexBox_GetTexRoot()
 	return fnamemodify(LatexBox_GetMainTexFile(), ':h')
 endfunction
 
-"!function! LatexBox_GetTexFile()
-"!	if &filetype != 'tex'
-"!		echomsg 'not a tex file'
-"!		return ''
-"!	endif
-"!	return expand("%:p")
-"!endfunction
-
 function! LatexBox_GetTexBasename(with_dir)
 	if a:with_dir
 		return fnamemodify(LatexBox_GetMainTexFile(), ':r')
@@ -173,26 +166,6 @@ endfunction
 function! LatexBox_GetOutputFile()
 	return LatexBox_GetTexBasename(1) . '.' . g:LatexBox_output_type
 endfunction
-" }}}
-
-" FIXME: remove this
-"!" GetAuxIncludedFiles {{{
-"!function! LatexBox_GetAuxIncludedFiles(auxfile)
-"!
-"!	let files = []
-"!	let prefix = fnamemodify(a:auxfile, ':p:h')
-"!
-"!	for line in readfile(a:auxfile)
-"!		let newaux = matchstr(line, '^\\@input{\zs[^}]*\ze}')
-"!		if newaux != ''
-"!			call add(files, prefix . '/' . newaux)
-"!		endif
-"!	endfor
-"!
-"!	return files
-"!
-"!endfunction
-
 " }}}
 
 " View {{{

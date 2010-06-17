@@ -15,7 +15,7 @@ function! LatexBox_JumpToNextBraces(backward)
 	endif
 	let prev = strpart(getline('.'), col('.') - 2, 1)
 	let next = strpart(getline('.'), col('.') - 1, 1)
-	if next =~ '[]}]' && prev !~ '[[{]'
+	if next =~ '[]}]' && prev !~ '[][{}]'
 		return "\<Right>"
 	else
 		return ''
