@@ -1,5 +1,30 @@
 " LaTeX Box motion functions
 
+" begin/end pairs {{{
+function! s:JumpToMatch()
+	for [begin_pat, end_pat] in [['\\begin\>', '\\end\>'], ['\\left\>', '\\right\>']]
+		let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''^%\|[^\\]%'''
+		if expand("<cWORD>") =~ begin_pat
+			let [lnum, cnum] = searchpos(begin_pat, 'ncbW')
+			if lnum == getpos('.')[1]
+				call searchpos(begin_pat, 'cbW')
+				call searchpairpos(begin_pat, '', end_pat, 'W', filter)
+			endif
+			return
+		elseif expand("<cWORD>") =~ end_pat
+			let [lnum, cnum] = searchpos(end_pat, 'ncbW')
+			if lnum == getpos('.')[1]
+				call search(end_pat, 'cbW')
+				call searchpairpos(begin_pat, '', end_pat, 'bW', filter)
+			endif
+			return
+		endif
+	endfor
+	normal! %
+endfunction
+map <Plug>JumpToMatch :call <SID>JumpToMatch()<CR>
+" }}}
+
 " Jump to the next braces {{{
 "
 function! LatexBox_JumpToNextBraces(backward)

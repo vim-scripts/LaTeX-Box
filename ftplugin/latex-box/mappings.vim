@@ -1,5 +1,9 @@
 " LaTeX Box mappings
 
+if exists("g:LatexBox_no_mappings")
+	finish
+endif
+
 " latexmk {{{
 map <buffer> <LocalLeader>ll :Latexmk<CR>
 map <buffer> <LocalLeader>lL :LatexmkForce<CR>
@@ -23,6 +27,10 @@ setlocal efm=%E%f:%l:%m,%-Cl.%l\ %m,%-G
 " TOC {{{
 command! LatexTOC call LatexBox_TOC()
 map <silent> <buffer> <LocalLeader>lt :LatexTOC<CR>
+" }}}
+
+" begin/end pairs {{{
+map <silent> <buffer> % <Plug>JumpToMatch
 " }}}
 
 setlocal omnifunc=LatexBox_Complete

@@ -88,25 +88,6 @@ if !exists('g:LatexBox_completion_commands')
 endif
 " }}}
 
-" Templates {{{
-" DEPRECATED
-"!if !exists('g:LatexBox_templates')
-"!	let g:LatexBox_templates = {
-"!				\ 'document':	{},
-"!				\ 'abstract':	{},
-"!				\ 'itemize':	{'template': "\<Tab>\\item "},
-"!				\ 'enumerate':	{'template': "\<Tab>\\item "},
-"!				\ 'figure':	 	{'label': 'fig:', 'options': '[htb]'},
-"!				\ 'table':		{'label': 'tab:', 'options': '[htb]'},
-"!				\ 'tabular':	{'options': '[cc]'},
-"!				\ 'center':	 	{},
-"!				\ 'equation':	{'label': 'eq:'},
-"!				\ 'align':		{'label': 'eq:'},
-"!				\ 'gather':		{'label': 'eq:'},
-"!				\ }
-"!endif
-" }}}
-
 " }}}
 
 " Filename utilities {{{
@@ -168,7 +149,7 @@ function! LatexBox_GetOutputFile()
 endfunction
 " }}}
 
-" View {{{
+" View Output {{{
 function! LatexBox_View()
 	let outfile = LatexBox_GetOutputFile()
 	if !filereadable(outfile)
@@ -181,5 +162,52 @@ endfunction
 command! LatexView			call LatexBox_View()
 " }}}
 
+" Get Current Environment {{{
+" LatexBox_GetCurrentEnvironment([with_pos])
+" Returns:
+" - environment													if with_pos is not given
+" - [envirnoment, lnum_begin, cnum_begin, lnum_end, cnum_end]	if with_pos is nonzero
+function! LatexBox_GetCurrentEnvironment(...)
+
+	if a:0 > 0
+		let with_pos = a:1
+	else
+		let with_pos = 0
+	endif
+
+	let begin_pat = '\\begin\_\s*{[^}]*}\|\\\[\|\\('
+	let end_pat = '\\end\_\s*{[^}]*}\|\\\]\|\\)'
+	let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''^%\|[^\\]%'''
+
+	" match begin/end pairs but skip comments
+	let [lnum, cnum] = searchpairpos(begin_pat, '', end_pat, 'bnW', filter)
+
+	let env = ''
+
+	if lnum
+
+		let line = strpart(getline(lnum), cnum - 1)
+
+		if empty(env)
+			let env = matchstr(line, '^\\begin\_\s*{\zs[^}]*\ze}')
+		endif
+		if empty(env)
+			let env = matchstr(line, '^\\\[')
+		endif
+		if empty(env)
+			let env = matchstr(line, '^\\(')
+		endif
+
+	endif
+
+	if with_pos == 1
+		let [lnum2, cnum2] = searchpairpos(begin_pat, '', end_pat, 'ncW', filter)
+		return [env, lnum, cnum, lnum2, cnum2]
+	else
+		return env
+	endif
+
+endfunction
+" }}}
 
 " vim:fdm=marker:ff=unix:noet:ts=4:sw=4

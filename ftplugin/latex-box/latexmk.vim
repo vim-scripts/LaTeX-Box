@@ -85,7 +85,15 @@ function! LatexBox_LatexmkStop()
 		return
 	endif
 
-	let gpid = s:latexmk_running_pids[basename]
+	call s:kill_latexmk(s:latexmk_running_pids[basename])
+
+	call remove(s:latexmk_running_pids, basename)
+	echomsg "latexmk stopped for `" . fnamemodify(basename, ':t') . "'"
+endfunction
+" }}}
+
+" kill_latexmk {{{
+function! s:kill_latexmk(gpid)
 
 	" This version doesn't work on systems on which pkill is not installed:
 	"!silent execute '! pkill -g ' . pid
@@ -101,7 +109,7 @@ function! LatexBox_LatexmkStop()
 	let tmpfile = tempname()
 	silent execute '!ps x -o pgid,pid > ' . tmpfile
 	for line in readfile(tmpfile)
-		let pid = matchstr(line, '^\s*' . gpid . '\s\+\zs\d\+\ze')
+		let pid = matchstr(line, '^\s*' . a:gpid . '\s\+\zs\d\+\ze')
 		if !empty(pid)
 			call add(pids, pid)
 		endif
@@ -110,9 +118,15 @@ function! LatexBox_LatexmkStop()
 	if !empty(pids)
 		silent execute '! kill ' . join(pids)
 	endif
+endfunction
+" }}}
 
-	call remove(s:latexmk_running_pids, basename)
-	echomsg "latexmk stopped for `" . fnamemodify(basename, ':t') . "'"
+" kill_all_latexmk {{{
+function! s:kill_all_latexmk()
+	for gpid in values(s:latexmk_running_pids)
+		call s:kill_latexmk(gpid)
+	endfor
+	let s:latexmk_running_pids = {}
 endfunction
 " }}}
 
@@ -181,5 +195,7 @@ command! LatexmkStatusDetailed	call LatexBox_LatexmkStatus(1)
 command! LatexmkStop			call LatexBox_LatexmkStop()
 command! LatexErrors			call LatexBox_LatexErrors(1)
 " }}}
+
+autocmd VimLeavePre * call <SID>kill_all_latexmk()
 
 " vim:fdm=marker:ff=unix:noet:ts=4:sw=4

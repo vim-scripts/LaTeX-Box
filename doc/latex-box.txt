@@ -5,7 +5,9 @@ This plugin provides:
 - Background compilation using latexmk;
 - Completion for commands, environments, labels, and bibtex entries;
 - A simple table of contents;
-- Motion through brackets/braces.
+- Smart indentation (activated with set smartindent);
+- Motion between \begin/\end pairs with the % key;
+- Motion through brackets/braces (with user-defined keys).
 
 ==============================================================================
 
@@ -230,17 +232,22 @@ Insertion ~
 
 <Plug>LatexCloseLastEnv
 	Close the last matching open environment. Use with imap, e.g.: >
-	imap <buffer> ]]	<Plug>LatexCloseLastEnv
+	imap ]]		<Plug>LatexCloseLastEnv
+<
+<Plug>LatexChangeEnv
+	Change the current environment. Use with nmap, e.g.: >
+	nmap <F5>		<Plug>LatexChangeEnv
 <
 <Plug>LatexWrapSelection
 	Wrap the current selection in a LaTeX command. Use with vmap, e.g.: >
-	vmap <buffer> <F7>	<Plug>LatexWrapSelection
+	vmap <F7>		<Plug>LatexWrapSelection
 <
-Suggested bindings: >
-	imap <buffer> [[ 	\begin{
-	imap <buffer> ]]	<Plug>LatexCloseLastEnv
-	vmap <buffer> <F7>	<Plug>LatexWrapSelection
-	imap <buffer> (( 	\eqref{
+Suggested mappings to put in ~/.vim/ftplugin/tex.vim: >
+	imap <buffer> [[ 		\begin{
+	imap <buffer> ]]		<Plug>LatexCloseLastEnv
+	nmap <buffer> <F5>		<Plug>LatexChangeEnv
+	vmap <buffer> <F7>		<Plug>LatexWrapSelection
+	imap <buffer> (( 		\eqref{
 <
 ------------------------------------------------------------------------------
 
@@ -265,6 +272,13 @@ SETTINGS						*latex-box-settings*
 
 
 ------------------------------------------------------------------------------
+
+Mappings ~
+
+*g:LatexBox_no_mappings*
+	If this variable is defined, the default keyboard mappings will not be
+	loaded.
+
 
 						*latex-box-settings-completion*
 Completion ~
@@ -350,7 +364,7 @@ Compilation ~
 
 TODO						*latex-box-todo*
 
-- Proper indentation.
+- Fix bugs?
 
 ==============================================================================
 
