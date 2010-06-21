@@ -5,9 +5,10 @@ This plugin provides:
 - Background compilation using latexmk;
 - Completion for commands, environments, labels, and bibtex entries;
 - A simple table of contents;
-- Smart indentation (activated with set smartindent);
+- Smart indentation (activated with "set smartindent");
 - Motion between \begin/\end pairs with the % key;
 - Motion through brackets/braces (with user-defined keys).
+- Environment objects (e.g., select environement with "vie" or "vae")
 
 ==============================================================================
 

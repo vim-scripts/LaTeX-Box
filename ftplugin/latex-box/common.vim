@@ -175,12 +175,17 @@ function! LatexBox_GetCurrentEnvironment(...)
 		let with_pos = 0
 	endif
 
+	let pos = getpos('.')
 	let begin_pat = '\\begin\_\s*{[^}]*}\|\\\[\|\\('
 	let end_pat = '\\end\_\s*{[^}]*}\|\\\]\|\\)'
 	let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''^%\|[^\\]%'''
 
 	" match begin/end pairs but skip comments
-	let [lnum, cnum] = searchpairpos(begin_pat, '', end_pat, 'bnW', filter)
+	let flags = 'bnW'
+	if strpart(getline('.'), col('.') - 1) =~ '^\%(' . begin_pat . '\)'
+		let flags .= 'c'
+	endif
+	let [lnum, cnum] = searchpairpos(begin_pat, '', end_pat, flags, filter)
 
 	let env = ''
 
@@ -201,11 +206,18 @@ function! LatexBox_GetCurrentEnvironment(...)
 	endif
 
 	if with_pos == 1
-		let [lnum2, cnum2] = searchpairpos(begin_pat, '', end_pat, 'ncW', filter)
+
+		let flags = 'nW'
+		if !(lnum == pos[1] && cnum == pos[2])
+			let flags .= 'c'
+		endif
+
+		let [lnum2, cnum2] = searchpairpos(begin_pat, '', end_pat, flags, filter)
 		return [env, lnum, cnum, lnum2, cnum2]
 	else
 		return env
 	endif
+
 
 endfunction
 " }}}

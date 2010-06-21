@@ -30,7 +30,12 @@ map <silent> <buffer> <LocalLeader>lt :LatexTOC<CR>
 " }}}
 
 " begin/end pairs {{{
-map <silent> <buffer> % <Plug>JumpToMatch
+nmap <buffer> % <Plug>LatexBox_JumpToMatch
+xmap <buffer> % <Plug>LatexBox_JumpToMatch
+vmap <buffer> ie <Plug>LatexBox_SelectCurrentEnvInner
+vmap <buffer> ae <Plug>LatexBox_SelectCurrentEnvOuter
+omap <buffer> ie :normal vie<CR>
+omap <buffer> ae :normal vae<CR>
 " }}}
 
 setlocal omnifunc=LatexBox_Complete

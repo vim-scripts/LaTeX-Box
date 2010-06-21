@@ -1,28 +1,85 @@
 " LaTeX Box motion functions
 
 " begin/end pairs {{{
-function! s:JumpToMatch()
-	for [begin_pat, end_pat] in [['\\begin\>', '\\end\>'], ['\\left\>', '\\right\>']]
-		let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''^%\|[^\\]%'''
-		if expand("<cWORD>") =~ begin_pat
-			let [lnum, cnum] = searchpos(begin_pat, 'ncbW')
-			if lnum == getpos('.')[1]
-				call searchpos(begin_pat, 'cbW')
-				call searchpairpos(begin_pat, '', end_pat, 'W', filter)
-			endif
+function! s:JumpToMatch(mode)
+
+	" selection is lost upon function call, reselect
+	if a:mode == 'v'
+		normal! gv
+	endif
+
+	let open_pats = ['{', '\[', '(', '\\begin\>', '\\left\>']
+	let close_pats = ['}', '\]', ')', '\\end\>', '\\right\>']
+
+	"for [open_pat, close_pat] in [['\\begin\>', '\\end\>'], ['\\left\>', '\\right\>']]
+
+	let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''^%\|[^\\]%'''
+
+	" move to the left until not on alphabetic characters
+	let [bufnum, lnum, cnum, off] = getpos('.')
+	let line = getline(lnum)
+	while cnum > 1 && line[cnum - 1] =~ '\a'
+		let cnum -= 1
+	endwhile
+	call cursor(lnum, cnum)
+
+	" go to next opening/closing pattern
+	call search(join(open_pats + close_pats, '\|'), 'cW', filter)
+
+	let rest_of_line = strpart(line, col('.') - 1)
+
+	for i in range(len(open_pats))
+		let open_pat = open_pats[i]
+		let close_pat = close_pats[i]
+
+		if rest_of_line =~ '^\%(' . open_pat . '\)'
+			" if on opening pattern, go to closing pattern
+			call searchpair(open_pat, '', close_pat, 'W', filter)
 			return
-		elseif expand("<cWORD>") =~ end_pat
-			let [lnum, cnum] = searchpos(end_pat, 'ncbW')
-			if lnum == getpos('.')[1]
-				call search(end_pat, 'cbW')
-				call searchpairpos(begin_pat, '', end_pat, 'bW', filter)
-			endif
+		elseif rest_of_line =~ '^\%(' . close_pat . '\)'
+			" if on closing pattern, go to opening pattern
+			let flags = 'bW'
+			call searchpair(open_pat, '', close_pat, 'bW', filter)
 			return
 		endif
+
 	endfor
-	normal! %
+
 endfunction
-map <Plug>JumpToMatch :call <SID>JumpToMatch()<CR>
+nnoremap <silent> <Plug>LatexBox_JumpToMatch :call <SID>JumpToMatch('n')<CR>
+vnoremap <silent> <Plug>LatexBox_JumpToMatch :<C-U>call <SID>JumpToMatch('v')<CR>
+" }}}
+
+" select current environment {{{
+function! s:SelectCurrentEnv(seltype)
+	let [env, lnum, cnum, lnum2, cnum2] = LatexBox_GetCurrentEnvironment(1)
+	call cursor(lnum, cnum)
+	if a:seltype == 'inner'
+		if env =~ '^\'
+			normal! 2l
+		else
+			call search('}\_\s*', 'eW')
+			normal l
+		endif
+	endif
+	if visualmode() ==# 'V'
+		normal! V
+	else
+		normal! v
+	endif
+	call cursor(lnum2, cnum2)
+	if a:seltype == 'inner'
+		call search('\S\_\s*', 'bW')
+	else
+		if env =~ '^\'
+			normal! 2l
+		else
+			call search('}', 'eW')
+		endif
+	endif
+endfunction
+vnoremap <silent> <Plug>LatexBox_SelectCurrentEnvInner :<C-U>call <SID>SelectCurrentEnv('inner')<CR>
+vnoremap <silent> <Plug>LatexBox_SelectCurrentEnvOuter :<C-U>call <SID>SelectCurrentEnv('outer')<CR>
 " }}}
 
 " Jump to the next braces {{{

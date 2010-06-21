@@ -1,7 +1,7 @@
 " LaTeX Box plugin for Vim
 " Maintainer: David Munger
 " Email: mungerd@gmail.com
-" Version: 0.8
+" Version: 0.8.1
 
 if !exists('s:loaded')
 
