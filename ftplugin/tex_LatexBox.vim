@@ -1,7 +1,9 @@
 " LaTeX Box plugin for Vim
 " Maintainer: David Munger
 " Email: mungerd@gmail.com
-" Version: 0.8.2
+" Version: 0.8.3
+" - Load errors automatically when latexmk exits with nonzero status
+" - Fixed a stupid bug that would prevent in bibtex completion
 
 if !exists('s:loaded')
 

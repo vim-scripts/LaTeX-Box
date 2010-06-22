@@ -126,7 +126,7 @@ function! s:FindBibData(...)
 		let file = a:1
 	endif
 
-	if empty(glob(file), 1)
+	if empty(glob(file, 1))
 		return ''
 	endif
 

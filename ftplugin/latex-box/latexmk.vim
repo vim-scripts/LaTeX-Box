@@ -30,7 +30,7 @@ function! s:LatexmkCallback(basename, status)
 		echomsg "latexmk finished"
 	endif
 	call remove(s:latexmk_running_pids, a:basename)
-	call LatexBox_LatexmkErrors(0)
+	call LatexBox_LatexErrors(0)
 	"call setpos('.', pos)
 endfunction
 " }}}
