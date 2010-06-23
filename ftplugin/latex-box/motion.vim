@@ -8,12 +8,11 @@ function! s:JumpToMatch(mode)
 		normal! gv
 	endif
 
+	" open/close pairs (dollars signs are treated apart)
 	let open_pats = ['{', '\[', '(', '\\begin\>', '\\left\>']
 	let close_pats = ['}', '\]', ')', '\\end\>', '\\right\>']
 
-	"for [open_pat, close_pat] in [['\\begin\>', '\\end\>'], ['\\left\>', '\\right\>']]
-
-	let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''^%\|[^\\]%'''
+	let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''\\\@<!\\%'''
 
 	" move to the left until not on alphabetic characters
 	let [bufnum, lnum, cnum, off] = getpos('.')
@@ -24,30 +23,70 @@ function! s:JumpToMatch(mode)
 	call cursor(lnum, cnum)
 
 	" go to next opening/closing pattern
-	call search(join(open_pats + close_pats, '\|'), 'cW', filter)
+	call search('\m\C\%(' . join(open_pats + close_pats + ['\\\@<!\$'], '\|') . '\)', 'cW', filter)
 
 	let rest_of_line = strpart(line, col('.') - 1)
 
-	for i in range(len(open_pats))
-		let open_pat = open_pats[i]
-		let close_pat = close_pats[i]
+	if rest_of_line =~ '^\$'
 
-		if rest_of_line =~ '^\%(' . open_pat . '\)'
-			" if on opening pattern, go to closing pattern
-			call searchpair(open_pat, '', close_pat, 'W', filter)
-			return
-		elseif rest_of_line =~ '^\%(' . close_pat . '\)'
-			" if on closing pattern, go to opening pattern
-			let flags = 'bW'
-			call searchpair(open_pat, '', close_pat, 'bW', filter)
-			return
+		" match for '$' pairs
+		if searchpair('\\\@<!\$', '', '\\\@<!\$', 'nrmbcW', filter) % 2
+			call search('\\\@<!\$', 'W')
+		else
+			call search('\\\@<!\$', 'bW')
 		endif
 
-	endfor
+	else
+
+		" match other pairs
+		for i in range(len(open_pats))
+			let open_pat = open_pats[i]
+			let close_pat = close_pats[i]
+
+			if rest_of_line =~ '^\C\%(' . open_pat . '\)'
+				" if on opening pattern, go to closing pattern
+				call searchpair('\C' . open_pat, '', '\C' . close_pat, 'W', filter)
+				return
+			elseif rest_of_line =~ '^\C\%(' . close_pat . '\)'
+				" if on closing pattern, go to opening pattern
+				let flags = 'bW'
+				call searchpair('\C' . open_pat, '', '\C' . close_pat, 'bW', filter)
+				return
+			endif
+
+		endfor
+	endif
 
 endfunction
 nnoremap <silent> <Plug>LatexBox_JumpToMatch :call <SID>JumpToMatch('n')<CR>
 vnoremap <silent> <Plug>LatexBox_JumpToMatch :<C-U>call <SID>JumpToMatch('v')<CR>
+" }}}
+
+" select inline math {{{
+function! s:SelectInlineMath(seltype)
+	let saved_pos = getpos('.')
+	let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''\\\@<!\\%'''
+	call search('\m\\\@<!\$', 'bW', filter)
+
+	if searchpair('\\\@<!\$', '', '\\\@<!\$', 'nrmbcW', filter) % 2
+		if a:seltype == 'inner'
+			normal! w
+		endif
+		if visualmode() ==# 'V'
+			normal! V
+		else
+			normal! v
+		endif
+		call search('\\\@<!\$', 'W')
+		if a:seltype == 'inner'
+			normal! b
+		endif
+	else
+		setpos('.', saved_pos)
+	endif
+endfunction
+vnoremap <silent> <Plug>LatexBox_SelectInlineMathInner :<C-U>call <SID>SelectInlineMath('inner')<CR>
+vnoremap <silent> <Plug>LatexBox_SelectInlineMathOuter :<C-U>call <SID>SelectInlineMath('outer')<CR>
 " }}}
 
 " select current environment {{{
@@ -56,10 +95,9 @@ function! s:SelectCurrentEnv(seltype)
 	call cursor(lnum, cnum)
 	if a:seltype == 'inner'
 		if env =~ '^\'
-			normal! 2l
+			call search('\\.\_\s*\S', 'eW')
 		else
-			call search('}\_\s*', 'eW')
-			normal l
+			call search('}\_\s*\S', 'eW')
 		endif
 	endif
 	if visualmode() ==# 'V'
@@ -72,7 +110,7 @@ function! s:SelectCurrentEnv(seltype)
 		call search('\S\_\s*', 'bW')
 	else
 		if env =~ '^\'
-			normal! 2l
+			normal! l
 		else
 			call search('}', 'eW')
 		endif
@@ -154,7 +192,7 @@ function! LatexBox_TOC()
 	let toc = s:ReadTOC(LatexBox_GetAuxFile())
 	let calling_buf = bufnr('%')
 
-	30vnew +setlocal\ buftype=nofile LaTeX\ TOC
+	execute g:LatexBox_split_width . 'vnew +setlocal\ buftype=nofile LaTeX\ TOC'
 
 	for entry in toc
 		call append('$', entry['number'] . "\t" . entry['text'])

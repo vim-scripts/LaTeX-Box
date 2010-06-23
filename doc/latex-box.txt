@@ -9,6 +9,7 @@ This plugin provides:
 - Motion between \begin/\end pairs with the % key;
 - Motion through brackets/braces (with user-defined keys).
 - Environment objects (e.g., select environement with "vie" or "vae")
+- Inline math objects (e.g., select inline math with "vi$" or "va$")
 
 ==============================================================================
 
@@ -34,6 +35,7 @@ This plugin provides:
 |latex-box-settings|			SETTINGS
 |latex-box-settings-compilation|	Compilation
 |latex-box-settings-completion|		Completion
+|latex-box-settings-windows|		Vim Windows
 
 
 ==============================================================================
@@ -178,6 +180,7 @@ Motion ~
 *:LatexTOC*
 	Open a table of contents.
 	Use Enter to navigate to selected entry.
+	See |g:LatexBox_split_width|.
 
 
 
@@ -359,6 +362,16 @@ Compilation ~
 *g:LatexBox_viewer*		Default: "xdg-open"
 
 	Viewer application for the output file, e.g., "xpdf".
+
+
+------------------------------------------------------------------------------
+
+						*latex-box-settings-windows*
+Vim Windows ~
+
+*g:LatexBox_split_width*	Default: 30
+
+	Width of vertically split vim windows. Used for the table of contents.
 
 
 ==============================================================================

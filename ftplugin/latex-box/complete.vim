@@ -25,9 +25,9 @@ function! LatexBox_Complete(findstart, base)
 		endwhile
 
 		let line_start = line[:pos-1]
-		if line_start =~ '\\begin\_\s*{$'
+		if line_start =~ '\C\\begin\_\s*{$'
 			let s:completion_type = 'begin'
-		elseif line_start =~ '\\end\_\s*{$'
+		elseif line_start =~ '\C\\end\_\s*{$'
 			let s:completion_type = 'end'
 		elseif line_start =~ g:LatexBox_ref_pattern . '$'
 			let s:completion_type = 'ref'
@@ -135,16 +135,16 @@ function! s:FindBibData(...)
 	let bibdata_list = []
 
 	let bibdata_list +=
-				\ map(filter(copy(lines), 'v:val =~ ''\\bibliography\s*{[^}]\+}'''),
-				\ 'matchstr(v:val, ''\\bibliography\s*{\zs[^}]\+\ze}'')')
+				\ map(filter(copy(lines), 'v:val =~ ''\C\\bibliography\s*{[^}]\+}'''),
+				\ 'matchstr(v:val, ''\C\\bibliography\s*{\zs[^}]\+\ze}'')')
 
 	let bibdata_list +=
-				\ map(filter(copy(lines), 'v:val =~ ''\\\%(input\|include\)\s*{[^}]\+}'''),
-				\ 's:FindBibData(LatexBox_kpsewhich(matchstr(v:val, ''\\\%(input\|include\)\s*{\zs[^}]\+\ze}'')))')
+				\ map(filter(copy(lines), 'v:val =~ ''\C\\\%(input\|include\)\s*{[^}]\+}'''),
+				\ 's:FindBibData(LatexBox_kpsewhich(matchstr(v:val, ''\C\\\%(input\|include\)\s*{\zs[^}]\+\ze}'')))')
 
 	let bibdata_list +=
-				\ map(filter(copy(lines), 'v:val =~ ''\\\%(input\|include\)\s\+\S\+'''),
-				\ 's:FindBibData(LatexBox_kpsewhich(matchstr(v:val, ''\\\%(input\|include\)\s\+\zs\S\+\ze'')))')
+				\ map(filter(copy(lines), 'v:val =~ ''\C\\\%(input\|include\)\s\+\S\+'''),
+				\ 's:FindBibData(LatexBox_kpsewhich(matchstr(v:val, ''\C\\\%(input\|include\)\s\+\zs\S\+\ze'')))')
 
 	let bibdata = join(bibdata_list, ',')
 
@@ -292,8 +292,8 @@ endfunction
 " Close Last Environment {{{
 function! s:CloseLastEnv()
 	" first, try with \left/\right pairs
-	let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''^%\|[^\\]%'''
-	let [lnum, cnum] = searchpairpos('\\left\>', '', '\\right\>', 'bnW', filter)
+	let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''\\\@<!%'''
+	let [lnum, cnum] = searchpairpos('\C\\left\>', '', '\C\\right\>', 'bnW', filter)
 	if lnum
 		let line = strpart(getline(lnum), cnum - 1)
 		let bracket = matchstr(line, '^\\left\zs\((\|\[\|\\{\||\|\.\)\ze')
