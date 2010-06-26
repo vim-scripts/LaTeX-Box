@@ -82,7 +82,7 @@ function! s:SelectInlineMath(seltype)
 			normal! b
 		endif
 	else
-		setpos('.', saved_pos)
+		keepjumps call setpos('.', saved_pos)
 	endif
 endfunction
 vnoremap <silent> <Plug>LatexBox_SelectInlineMathInner :<C-U>call <SID>SelectInlineMath('inner')<CR>

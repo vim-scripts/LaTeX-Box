@@ -179,11 +179,11 @@ function! LatexBox_BibSearch(regexp)
 	let lines = split(substitute(join(readfile(bblfile), "\n"), "\(\S\)\s*\n", '\1 ', 'g'), "\n")
 
     for line in filter(lines, 'v:val =~ a:regexp')
-            let matches = matchlist(line, '^{\(.*\)}{\(.*\)}{\(.*\)}{\(.*\)}{\(.*\)}.*')
-            if !empty(matches) && !empty(matches[1])
-                call add(res, {'key': matches[1], 'type': matches[2],
-							\ 'author': matches[3], 'year': matches[4], 'title': matches[5]})
-            endif
+		let matches = matchlist(line, '^{\(.*\)}{\(.*\)}{\(.*\)}{\(.*\)}{\(.*\)}.*')
+		if !empty(matches) && !empty(matches[1])
+			call add(res, {'key': matches[1], 'type': matches[2],
+						\ 'author': matches[3], 'year': matches[4], 'title': matches[5]})
+		endif
     endfor
 
 	call delete(auxfile)
@@ -319,8 +319,8 @@ endfunction
 
 " Wrap Selection {{{
 function! s:WrapSelection(wrapper)
-	normal `>a}
-	exec 'normal `<i\' . a:wrapper . '{'
+	keepjumps normal `>a}
+	exec 'keepjumps normal `<i\' . a:wrapper . '{'
 endfunction
 " }}}
 
@@ -386,7 +386,7 @@ endfunction
 
 " Mappings {{{
 imap <Plug>LatexCloseLastEnv	<C-R>=<SID>CloseLastEnv()<CR>
-vmap <Plug>LatexWrapSelection	:call <SID>WrapSelection('')<CR>i
+vmap <Plug>LatexWrapSelection	:<c-u>call <SID>WrapSelection('')<CR>i
 nmap <Plug>LatexChangeEnv		:call <SID>ChangeEnv()<CR>
 " }}}
 

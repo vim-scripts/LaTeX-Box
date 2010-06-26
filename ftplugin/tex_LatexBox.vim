@@ -1,7 +1,7 @@
 " LaTeX Box plugin for Vim
 " Maintainer: David Munger
 " Email: mungerd@gmail.com
-" Version: 0.8.4
+" Version: 0.8.5a
 
 if !exists('s:loaded')
 
@@ -17,5 +17,6 @@ if !exists('s:loaded')
 endif
 
 execute 'source ' . fnameescape(prefix . 'mappings.vim')
+execute 'source ' . fnameescape(prefix . 'indent.vim')
 
 " vim:fdm=marker:ff=unix:noet:ts=4:sw=4
