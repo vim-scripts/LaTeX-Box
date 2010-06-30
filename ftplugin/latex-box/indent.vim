@@ -20,9 +20,14 @@ function! s:ComputeLevel(lnum_prev, open_pat, close_pat)
 
 	let n = 0
 
+	let line_prev = getline(a:lnum_prev)
+
+	" strip comments
+	let line_prev = substitute(line_prev, '\\\@<!%.*', '', 'g')
+
 	" find unmatched opening patterns on previous line
-	let n += len(substitute(substitute(getline(a:lnum_prev), a:open_pat, "\n", 'g'), "[^\n]", '', 'g'))
-	let n -= len(substitute(substitute(getline(a:lnum_prev), a:close_pat, "\n", 'g'), "[^\n]", '', 'g'))
+	let n += len(substitute(substitute(line_prev, a:open_pat, "\n", 'g'), "[^\n]", '', 'g'))
+	let n -= len(substitute(substitute(line_prev, a:close_pat, "\n", 'g'), "[^\n]", '', 'g'))
 
 	" reduce indentation if current line starts with a closing pattern
 	if getline(v:lnum) =~ '^\s*\%(' . a:close_pat . '\)'
@@ -30,7 +35,7 @@ function! s:ComputeLevel(lnum_prev, open_pat, close_pat)
 	endif
 
 	" compensate indentation if previous line starts with a closing pattern
-	if getline(a:lnum_prev) =~ '^\s*\%(' . a:close_pat . '\)'
+	if line_prev =~ '^\s*\%(' . a:close_pat . '\)'
 		let n += 1
 	endif
 	

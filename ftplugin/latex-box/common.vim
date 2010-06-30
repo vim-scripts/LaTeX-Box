@@ -172,6 +172,16 @@ endfunction
 command! LatexView			call LatexBox_View()
 " }}}
 
+" In Comment {{{
+" LatexBox_InComment([line], [col])
+" return true if inside comment
+function! LatexBox_InComment(...)
+	let line	= a:0 >= 1 ? a:1 : line('.')
+	let col		= a:0 >= 2 ? a:2 : col('.')
+	return synIDattr(synID(line("."), col("."), 0), "name") =~# '^texComment'
+endfunction
+" }}}
+
 " Get Current Environment {{{
 " LatexBox_GetCurrentEnvironment([with_pos])
 " Returns:
@@ -187,7 +197,6 @@ function! LatexBox_GetCurrentEnvironment(...)
 
 	let begin_pat = '\C\\begin\_\s*{[^}]*}\|\\\[\|\\('
 	let end_pat = '\C\\end\_\s*{[^}]*}\|\\\]\|\\)'
-	let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''\\\@<!%'''
 
 	" move to the left until on a backslash
 	let [bufnum, lnum, cnum, off] = getpos('.')
@@ -202,7 +211,7 @@ function! LatexBox_GetCurrentEnvironment(...)
 	if strpart(getline('.'), col('.') - 1) =~ '^\%(' . begin_pat . '\)'
 		let flags .= 'c'
 	endif
-	let [lnum1, cnum1] = searchpairpos(begin_pat, '', end_pat, flags, filter)
+	let [lnum1, cnum1] = searchpairpos(begin_pat, '', end_pat, flags, 'LatexBox_InComment()')
 
 	let env = ''
 
@@ -229,7 +238,7 @@ function! LatexBox_GetCurrentEnvironment(...)
 			let flags .= 'c'
 		endif
 
-		let [lnum2, cnum2] = searchpairpos(begin_pat, '', end_pat, flags, filter)
+		let [lnum2, cnum2] = searchpairpos(begin_pat, '', end_pat, flags, 'LatexBox_InComment()')
 		return [env, lnum1, cnum1, lnum2, cnum2]
 	else
 		return env

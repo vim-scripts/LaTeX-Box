@@ -6,7 +6,8 @@ This plugin provides:
 - Completion for commands, environments, labels, and bibtex entries;
 - A simple table of contents;
 - Smart indentation (activated with "set smartindent");
-- Motion between \begin/\end pairs with the % key;
+- Highlighting of matching \begin/\end pairs
+- Motion between matching \begin/\end pairs with the % key;
 - Motion through brackets/braces (with user-defined keys).
 - Environment objects (e.g., select environement with "vie" or "vae")
 - Inline math objects (e.g., select inline math with "vi$" or "va$")
@@ -234,23 +235,28 @@ Viewing ~
 Insertion ~
 
 
-<Plug>LatexCloseLastEnv
+*<Plug>LatexCloseLastEnv*
 	Close the last matching open environment. Use with imap, e.g.: >
 	imap ]]		<Plug>LatexCloseLastEnv
 <
-<Plug>LatexChangeEnv
+*<Plug>LatexChangeEnv*
 	Change the current environment. Use with nmap, e.g.: >
 	nmap <F5>		<Plug>LatexChangeEnv
 <
-<Plug>LatexWrapSelection
+*<Plug>LatexWrapSelection*
 	Wrap the current selection in a LaTeX command. Use with vmap, e.g.: >
 	vmap <F7>		<Plug>LatexWrapSelection
+<
+*<Plug>LatexWrapSelectionEnv*
+	Wrap the current selection in an environment. Use with vmap, e.g.: >
+	vmap <S-F7>		<Plug>LatexWrapSelection
 <
 Suggested mappings to put in ~/.vim/ftplugin/tex.vim: >
 	imap <buffer> [[ 		\begin{
 	imap <buffer> ]]		<Plug>LatexCloseLastEnv
 	nmap <buffer> <F5>		<Plug>LatexChangeEnv
 	vmap <buffer> <F7>		<Plug>LatexWrapSelection
+	vmap <buffer> <S-F7>		<Plug>LatexWrapSelectionEnv
 	imap <buffer> (( 		\eqref{
 <
 ------------------------------------------------------------------------------
@@ -262,6 +268,11 @@ Motion ~
 	Open a table of contents.
 	Use Enter to navigate to selected entry.
 
+*<Plug>LatexBox_JumpToMatch*
+	Jump to the matching bracket or \begin/\end pairs. Emulates |%|.
+
+*<Plug>LatexBox_BackJumpToMatch*
+	Same as |<Plug>LatexBox_JumpToMatch|, but the initial search is backward.
 
 Suggested bindings: >
 	map  <silent> <buffer> ¶ :call LatexBox_JumpToNextBraces(0)<CR>

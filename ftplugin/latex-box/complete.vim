@@ -292,8 +292,7 @@ endfunction
 " Close Last Environment {{{
 function! s:CloseLastEnv()
 	" first, try with \left/\right pairs
-	let filter = 'strpart(getline("."), 0, col(".") - 1) =~ ''\\\@<!%'''
-	let [lnum, cnum] = searchpairpos('\C\\left\>', '', '\C\\right\>', 'bnW', filter)
+	let [lnum, cnum] = searchpairpos('\C\\left\>', '', '\C\\right\>', 'bnW', 'LatexBox_InComment()')
 	if lnum
 		let line = strpart(getline(lnum), cnum - 1)
 		let bracket = matchstr(line, '^\\left\zs\((\|\[\|\\{\||\|\.\)\ze')
@@ -319,13 +318,24 @@ endfunction
 
 " Wrap Selection {{{
 function! s:WrapSelection(wrapper)
-	keepjumps normal `>a}
-	exec 'keepjumps normal `<i\' . a:wrapper . '{'
+	keepjumps normal! `>a}
+	execute 'keepjumps normal! `<i\' . a:wrapper . '{'
+endfunction
+" }}}
+
+" Wrap Selection in Environment with Prompt {{{
+function! s:WrapSelectionEnvPrompt()
+	let env = input('environment: ', '', 'customlist,' . s:SIDWrap('GetEnvironmentList'))
+	if empty(env)
+		return
+	endif
+	execute 'keepjumps normal! `>a\end{' . env . '}'
+	execute 'keepjumps normal! `<i\begin{' . env . '}'
 endfunction
 " }}}
 
 " Change Environment {{{
-function! s:ChangeEnv()
+function! s:ChangeEnvPrompt()
 
 	let [env, lnum, cnum, lnum2, cnum2] = LatexBox_GetCurrentEnvironment(1)
 
@@ -385,9 +395,10 @@ endfunction
 " }}}
 
 " Mappings {{{
-imap <Plug>LatexCloseLastEnv	<C-R>=<SID>CloseLastEnv()<CR>
-vmap <Plug>LatexWrapSelection	:<c-u>call <SID>WrapSelection('')<CR>i
-nmap <Plug>LatexChangeEnv		:call <SID>ChangeEnv()<CR>
+imap <Plug>LatexCloseLastEnv		<C-R>=<SID>CloseLastEnv()<CR>
+vmap <Plug>LatexWrapSelection		:<c-u>call <SID>WrapSelection('')<CR>i
+vmap <Plug>LatexWrapSelectionEnv	:<c-u>call <SID>WrapSelectionEnvPrompt()<CR>
+nmap <Plug>LatexChangeEnv			:call <SID>ChangeEnvPrompt()<CR>
 " }}}
 
 " vim:fdm=marker:ff=unix:noet:ts=4:sw=4
