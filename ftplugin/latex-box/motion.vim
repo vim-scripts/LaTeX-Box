@@ -1,12 +1,15 @@
 " LaTeX Box motion functions
 
+" HasSyntax {{{
 " s:HasSyntax(syntaxName, [line], [col])
 function! s:HasSyntax(syntaxName, ...)
 	let line	= a:0 >= 1 ? a:1 : line('.')
 	let col		= a:0 >= 2 ? a:2 : col('.')
 	return index(map(synstack(line, col), 'synIDattr(v:val, "name") == "' . a:syntaxName . '"'), 1) >= 0
 endfunction
+" }}}
 
+" Search and Skip Comments {{{
 " s:SearchAndSkipComments(pattern, [flags], [stopline])
 function! s:SearchAndSkipComments(pat, ...)
 	let flags		= a:0 >= 1 ? a:1 : ''
@@ -36,6 +39,7 @@ function! s:SearchAndSkipComments(pat, ...)
 
 	return ret
 endfunction
+" }}}
 
 " begin/end pairs {{{
 "
@@ -134,7 +138,7 @@ function! s:SelectInlineMath(seltype)
 	endif
 
 	if a:seltype == 'inner'
-		normal! w
+		normal! l
 	endif
 
 	if visualmode() ==# 'V'
@@ -146,7 +150,7 @@ function! s:SelectInlineMath(seltype)
 	call s:SearchAndSkipComments(dollar_pat, 'W')
 
 	if a:seltype == 'inner'
-		normal! ge
+		normal! h
 	endif
 endfunction
 
@@ -254,10 +258,23 @@ function! s:ReadTOC(auxfile)
 endfunction
 
 function! LatexBox_TOC()
+
+	" check if window already exists
+	let winnr = bufwinnr(bufnr('LaTeX TOC'))
+	if winnr >= 0
+		silent execute winnr . 'wincmd w'
+		return
+	endif
+
+	" read TOC
 	let toc = s:ReadTOC(LatexBox_GetAuxFile())
 	let calling_buf = bufnr('%')
 
-	execute g:LatexBox_split_width . 'vnew +setlocal\ buftype=nofile LaTeX\ TOC'
+	" find closest section in current buffer
+	let closest_index = s:FindClosestSection(toc)
+
+	execute g:LatexBox_split_width . 'vnew LaTeX\ TOC'
+	setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap cursorline
 
 	for entry in toc
 		call append('$', entry['number'] . "\t" . entry['text'])
@@ -265,27 +282,57 @@ function! LatexBox_TOC()
 	call append('$', ["", "<Esc>/q: close", "<Space>: jump", "<Enter>: jump and close"])
 
 	0delete
-	syntax match Comment /^<.*/
 
-	map <buffer> <silent> q			:bdelete<CR>
-	map <buffer> <silent> <Esc>		:bdelete<CR>
+	" syntax
+	syntax match helpText /^<.*/
+	syntax match secNum /^\S\+/ contained
+	syntax match secLine /^\S\+\t\S\+/ contains=secNum
+	syntax match mainSecLine /^[^\.]\+\t.*/ contains=secNum
+	syntax match ssubSecLine /^[^\.]\+\.[^\.]\+\.[^\.]\+\t.*/ contains=secNum
+	highlight link helpText		PreProc
+	highlight link secNum		Number
+	highlight link mainSecLine	Title
+	highlight link ssubSecLine	Comment
+
+	map <buffer> <silent> q			:bwipeout<CR>
+	map <buffer> <silent> <Esc>		:bwipeout<CR>
 	map <buffer> <silent> <Space> 	:call <SID>TOCActivate(0)<CR>
 	map <buffer> <silent> <CR> 		:call <SID>TOCActivate(1)<CR>
-	setlocal cursorline nomodifiable tabstop=8 nowrap
+    nnoremap <silent> <buffer> <leftrelease> :call <SID>TOCActivate(0)<cr>
+    nnoremap <silent> <buffer> <2-leftmouse> :call <SID>TOCActivate(1)<cr>
+	nnoremap <buffer> <silent> G	G4k
+
+	setlocal nomodifiable tabstop=8
 
 	let b:toc = toc
 	let b:calling_win = bufwinnr(calling_buf)
 
+	" jump to closest section
+	execute 'normal! ' . (closest_index + 1) . 'G'
+
 endfunction
 
-" TODO
-"!function! s:FindClosestSection(toc, pos)
-"!	let saved_pos = getpos('.')
-"!	for entry in toc
-"!	endfor
-"!
-"!	call setpos(saved_pos)
-"!endfunction
+" Binary search for the closest section
+" return the index of the TOC entry
+function! s:FindClosestSection(toc)
+	let imax = len(a:toc)
+	let imin = 0
+	while imin < imax - 1
+		let i = (imax + imin) / 2
+		let entry = a:toc[i]
+		let titlestr = entry['text']
+		let titlestr = escape(titlestr, '\')
+		let titlestr = substitute(titlestr, ' ', '\\_\\s\\+', 'g')
+		let [lnum, cnum] = searchpos('\\' . entry['level'] . '\_\s*{' . titlestr . '}', 'nW')
+		if lnum
+			let imax = i
+		else
+			let imin = i
+		endif
+	endwhile
+
+	return imin
+endfunction
 
 function! s:TOCActivate(close)
 	let n = getpos('.')[1] - 1
@@ -317,11 +364,12 @@ function! s:TOCActivate(close)
 	let titlestr = escape(titlestr, '\')
 	let titlestr = substitute(titlestr, ' ', '\\_\\s\\+', 'g')
 
-	call search('\\' . entry['level'] . '\_\s*{' . titlestr . '}', 'w')
-	normal zt
+	if search('\\' . entry['level'] . '\_\s*{' . titlestr . '}', 'w')
+		normal zt
+	endif
 
 	if a:close
-		execute 'bdelete ' . toc_bnr
+		execute 'bwipeout ' . toc_bnr
 	else
 		execute toc_wnr . 'wincmd w'
 	endif
@@ -404,6 +452,7 @@ endfunction
 augroup LatexBox_HighlightPairs
   " Replace all matchparen autocommands
   autocmd! CursorMoved *.tex call s:HighlightMatchingPair()
+  autocmd! CursorMovedi *.tex call s:HighlightMatchingPair()
 augroup END
 
 " vim:fdm=marker:ff=unix:noet:ts=4:sw=4

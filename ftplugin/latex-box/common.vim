@@ -197,6 +197,7 @@ function! LatexBox_GetCurrentEnvironment(...)
 
 	let begin_pat = '\C\\begin\_\s*{[^}]*}\|\\\[\|\\('
 	let end_pat = '\C\\end\_\s*{[^}]*}\|\\\]\|\\)'
+	let saved_pos = getpos('.')
 
 	" move to the left until on a backslash
 	let [bufnum, lnum, cnum, off] = getpos('.')
@@ -239,8 +240,10 @@ function! LatexBox_GetCurrentEnvironment(...)
 		endif
 
 		let [lnum2, cnum2] = searchpairpos(begin_pat, '', end_pat, flags, 'LatexBox_InComment()')
+		call setpos('.', saved_pos)
 		return [env, lnum1, cnum1, lnum2, cnum2]
 	else
+		call setpos('.', saved_pos)
 		return env
 	endif
 
