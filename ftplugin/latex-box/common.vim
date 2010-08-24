@@ -251,4 +251,48 @@ function! LatexBox_GetCurrentEnvironment(...)
 endfunction
 " }}}
 
+
+" Tex To Tree {{{
+" stores nested braces in a tree structure
+function! LatexBox_TexToTree(str)
+	let tree = []
+	let i1 = 0
+	let i2 = -1
+	let depth = 0
+	while i2 < len(a:str)
+		let i2 = match(a:str, '[{}]', i2 + 1)
+		if i2 < 0
+			let i2 = len(a:str)
+		endif
+		if i2 >= len(a:str) || a:str[i2] == '{'
+			if depth == 0 
+				let item = substitute(strpart(a:str, i1, i2 - i1), '^\s*\|\s*$', '', 'g')
+				if !empty(item)
+					call add(tree, item)
+				endif
+				let i1 = i2 + 1
+			endif
+			let depth += 1
+		else
+			let depth -= 1
+			if depth == 0
+				call add(tree, LatexBox_TexToTree(strpart(a:str, i1, i2 - i1)))
+				let i1 = i2 + 1
+			endif
+		endif
+	endwhile
+	return tree
+endfunction
+" }}}
+
+" Tree To Tex {{{
+function! LatexBox_TreeToTex(tree)
+	if type(a:tree) == type('')
+		return a:tree
+	else
+		return '{' . join(map(a:tree, 'LatexBox_TreeToTex(v:val)'), '') . '}'
+	endif
+endfunction
+" }}}
+
 " vim:fdm=marker:ff=unix:noet:ts=4:sw=4

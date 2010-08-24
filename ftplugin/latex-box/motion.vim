@@ -228,29 +228,25 @@ function! s:ReadTOC(auxfile)
 			continue
 		endif
 
-		let m = matchlist(line,
-					\ '^\\@writefile{toc}{\\contentsline\s*' .
-					\ '{\([^}]*\)}{\\numberline {\([^}]*\)}\(.*\)')
+		" Parse lines like:
+		" \@writefile{toc}{\contentsline {section}{\numberline {secnum}Section Title}{pagenumber}}
+		" \@writefile{toc}{\contentsline {section}{\tocsection {}{1}{Section Title}}{pagenumber}}
+		" \@writefile{toc}{\contentsline {section}{\numberline {secnum}Section Title}{pagenumber}{otherstuff}}
 
-		if !empty(m)
-			let str = m[3]
-			let nbraces = 0
-			let istr = 0
-			while nbraces >= 0 && istr < len(str)
-				if str[istr] == '{'
-					let nbraces += 1
-				elseif str[istr] == '}'
-					let nbraces -= 1
-				endif
-				let istr += 1
-			endwhile
-			let text = str[:(istr-2)]
-			let page = matchstr(str[(istr):], '{\([^}]*\)}')
-
-			call add(toc, {'file': fnamemodify(a:auxfile, ':r') . '.tex',
-						\ 'level': m[1], 'number': m[2], 'text': text, 'page': page})
+		let line = matchstr(line, '^\\@writefile{toc}{\\contentsline\s*\zs.*\ze}\s*$')
+		if empty(line)
+			continue
 		endif
 
+		let tree = LatexBox_TexToTree(line)
+		if empty(tree[1][1])
+			call remove(tree[1], 1)
+		endif
+		let text = LatexBox_TreeToTex(tree[1][2:])
+		let text = substitute(text, '^{\+\|}\+$', '', 'g')
+
+		call add(toc, {'file': fnamemodify(a:auxfile, ':r') . '.tex',
+					\ 'level': tree[0][0], 'number': tree[1][1][0], 'text': text, 'page': tree[2][0]})
 	endfor
 
 	return toc
